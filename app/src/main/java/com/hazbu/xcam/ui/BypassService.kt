@@ -11,6 +11,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.os.IBinder
 import android.os.Looper
 import android.os.ParcelFileDescriptor
 import androidx.core.app.NotificationCompat
@@ -23,14 +24,14 @@ import com.hazbu.xcam.core.surface.SurfaceProvider
 import com.hazbu.xcam.core.telemetry.PipelineTracker
 import com.hazbu.xcam.data.Constants
 import com.hazbu.xcam.utils.Logger
-import io.github.libxposed.service.IXposedService
-import io.github.libxposed.service.IXposedScopeCallback
+import io.github.libxposed.service.HookedProcess
 import io.github.libxposed.service.IHotReloadCallback
+import io.github.libxposed.service.IXposedScopeCallback
+import io.github.libxposed.service.IXposedService
 import io.github.libxposed.service.XposedService
 import io.github.libxposed.service.XposedServiceHelper
 import java.util.Timer
 import java.util.TimerTask
-import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Foreground service that runs in each target app's process.
@@ -65,15 +66,15 @@ class BypassService : Service(), XposedServiceHelper.OnServiceListener {
     private var xposedService: XposedService? = null
 
     private val xposedStub = object : IXposedService.Stub() {
-        override fun getApiVersion(): Int = IXposedService.API_101
+        override fun getApiVersion(): Int = IXposedService.API_102
         override fun getFrameworkName(): String = "libxposed"
         override fun getFrameworkVersion(): String = "102.0"
         override fun getFrameworkVersionCode(): Long = 102L
         override fun getFrameworkProperties(): Long = 0L
-        override fun getScope(): MutableList<String> = CopyOnWriteArrayList()
-        override fun requestScope(packages: MutableList<String>, callback: IXposedScopeCallback) {}
-        override fun removeScope(packages: MutableList<String>) {}
-        override fun getRunningTargets(): MutableList<io.github.libxposed.service.HookedProcess> = CopyOnWriteArrayList()
+        override fun getScope(): List<String> = emptyList()
+        override fun requestScope(packages: List<String>, callback: IXposedScopeCallback) {}
+        override fun removeScope(packages: List<String>) {}
+        override fun getRunningTargets(): List<HookedProcess> = emptyList()
         override fun hotReloadModule(targetId: Long, data: Bundle?, callback: IHotReloadCallback) {}
         override fun requestRemotePreferences(group: String): Bundle? = null
         override fun updateRemotePreferences(group: String, diff: Bundle?) {}
