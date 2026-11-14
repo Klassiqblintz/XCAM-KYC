@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.net.Uri
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -44,13 +45,30 @@ class BypassService : Service(), XposedServiceHelper.OnServiceListener {
         private const val CHANNEL_ID = Constants.SERVICE_NOTIFICATION_CHANNEL_ID
         private const val SERVICE_AUTHORITY = "com.hazbu.xcam.XposedService"
 
+        @Volatile
+        private var _instance: BypassService? = null
+
+        @JvmStatic
+        fun getInstance(): BypassService? = _instance
+
         @JvmStatic
         fun getService(context: Context): BypassService? {
             return try {
-                val helper = XposedServiceHelper.getService(context, SERVICE_AUTHORITY)
-                helper as? BypassService
+                val cr = context.contentResolver
+                val bundle = Bundle()
+                bundle.putString("action", "getService")
+                val result = cr.call(Uri.parse("content://$SERVICE_AUTHORITY"), "getService", null, bundle)
+                if (result != null) {
+                    val binder = result.getBinder("binder")
+                    if (binder != null) {
+                        val ixposed = IXposedService.Stub.asInterface(binder)
+                        if (ixposed != null) {
+                            _instance as? BypassService
+                        } else null
+                    } else null
+                } else null
             } catch (_: Exception) {
-                null
+                _instance
             }
         }
     }
@@ -93,6 +111,7 @@ class BypassService : Service(), XposedServiceHelper.OnServiceListener {
 
     override fun onCreate() {
         super.onCreate()
+        _instance = this
         mContext = this
         mPackageManager = packageManager
 
