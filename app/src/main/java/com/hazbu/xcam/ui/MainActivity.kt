@@ -361,6 +361,7 @@ fun MainScreen(
                 showAppPicker = showAppPicker,
                 onShowAppPicker = { showAppPicker = true },
                 selectedAppPackage = selectedAppPackage,
+                appList = appList,
                 setSelectedAppPackage = { pkg ->
                     setSelectedAppPackage(pkg)
                     showAppPicker = false
@@ -490,6 +491,7 @@ fun AppSelectionCard(
     showAppPicker: Boolean,
     onShowAppPicker: () -> Unit,
     selectedAppPackage: String?,
+    appList: List<AppInfo>,
     setSelectedAppPackage: (String?) -> Unit
 ) {
     Card(
@@ -567,8 +569,7 @@ fun AppSelectionCard(
                                 onSelect = {
                                     setSelectedAppPackage(appItem.packageName)
                                     onShowAppPicker()
-                                },
-                                allApps = appList
+                                }
                             )
                         }
                     }
@@ -584,7 +585,7 @@ fun AppSelectionCard(
 }
 
 @Composable
-fun AppRow(app: AppInfo, onSelect: () -> Unit, allApps: List<AppInfo>) {
+fun AppRow(app: AppInfo, onSelect: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()

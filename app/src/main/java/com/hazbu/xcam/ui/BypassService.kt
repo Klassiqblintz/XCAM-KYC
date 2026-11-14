@@ -57,13 +57,8 @@ class BypassService : Service(), XposedServiceHelper.OnServiceListener {
     private val updateInterval = 500L
     private var updateTask: TimerTask? = null
 
-    private val xposedService: XposedService by lazy {
-        object : XposedService(this@BypassService) {
-            override fun onBind(intent: android.content.Intent?): android.os.IBinder? {
-                return null
-            }
-        }
-    }
+    private var xposedService: XposedService? = null
+    private var xposedBinder: android.os.IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -88,7 +83,12 @@ class BypassService : Service(), XposedServiceHelper.OnServiceListener {
     }
 
     override fun onBind(intent: Intent?): IBinder? {
-        return xposedService.onBind(intent)
+        if (xposedBinder == null) {
+            val service = io.github.libxposed.service.XposedService(this)
+            xposedService = service
+            xposedBinder = service.getBinder()
+        }
+        return xposedBinder
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -184,12 +184,12 @@ class BypassService : Service(), XposedServiceHelper.OnServiceListener {
         startForeground(NOTIFICATION_ID, notification)
     }
 
-    override fun onServiceBind(service: XposedService) {
+    override fun onServiceBind(service: XposedService?) {
         isBound = true
         log("[+] Bound to XposedService")
     }
 
-    override fun onServiceDied(service: XposedService) {
+    override fun onServiceDied(service: XposedService?) {
         isBound = false
         log("[-] XposedService died")
     }

@@ -1,15 +1,15 @@
 package com.hazbu.xcam.utils
 
-import android.content.Context
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMuxer
 import android.os.Build
 import java.io.File
+import java.nio.ByteBuffer
 
 object MediaRemuxer {
-    fun loopVideo(context: Context, sourcePath: String, destPath: String): Boolean {
+    fun loopVideo(context: android.content.Context, sourcePath: String, destPath: String): Boolean {
         return try {
             val extractor = MediaExtractor()
             extractor.setDataSource(sourcePath)
@@ -54,6 +54,7 @@ object MediaRemuxer {
 
             // Extract and write (single loop)
             val buffer = ByteArray(1024 * 64)
+            val bufferInfo = MediaCodec.BufferInfo()
             extractor.selectTrack(videoTrack)
 
             var isRead = false
@@ -68,6 +69,12 @@ object MediaRemuxer {
                 val ct = extractor.sampleTime
                 val flags = extractor.sampleFlags
 
+                // Set buffer info from extractor state
+                bufferInfo.offset = 0
+                bufferInfo.size = sampleSize
+                bufferInfo.flags = flags
+                bufferInfo.timeUs = ct
+
                 if ((flags and MediaExtractor.SAMPLE_FLAG_SYNC) != 0) {
                     // Seek to start of this sync frame and copy the full sample
                     extractor.seekTo(ct, MediaExtractor.SEEK_TO_NEXT_SYNC)
@@ -77,13 +84,19 @@ object MediaRemuxer {
                             isRead = true
                             break
                         }
-                        val bb = java.nio.ByteBuffer.wrap(buffer, 0, s)
-                        muxer.writeSampleData(videoOutTrack, bb, extractor.sampleTime, flags)
+                        bufferInfo.size = s
+                        bufferInfo.timeUs = extractor.sampleTime
+                        bufferInfo.flags = extractor.sampleFlags
+                        val bb = ByteBuffer.wrap(buffer, 0, s)
+                        muxer.writeSampleData(videoOutTrack, bb, bufferInfo)
                         extractor.advance()
                     }
                 } else {
-                    val bb = java.nio.ByteBuffer.wrap(buffer, 0, sampleSize)
-                    muxer.writeSampleData(videoOutTrack, bb, extractor.sampleTime, flags)
+                    bufferInfo.size = sampleSize
+                    bufferInfo.timeUs = extractor.sampleTime
+                    bufferInfo.flags = flags
+                    val bb = ByteBuffer.wrap(buffer, 0, sampleSize)
+                    muxer.writeSampleData(videoOutTrack, bb, bufferInfo)
                     extractor.advance()
                 }
             }
@@ -98,8 +111,12 @@ object MediaRemuxer {
                         aRead = true
                         break
                     }
-                    val bb = java.nio.ByteBuffer.wrap(buffer, 0, s)
-                    muxer.writeSampleData(audioOutTrack, bb, extractor.sampleTime, flags)
+                    bufferInfo.offset = 0
+                    bufferInfo.size = s
+                    bufferInfo.timeUs = extractor.sampleTime
+                    bufferInfo.flags = extractor.sampleFlags
+                    val bb = ByteBuffer.wrap(buffer, 0, s)
+                    muxer.writeSampleData(audioOutTrack, bb, bufferInfo)
                     extractor.advance()
                 }
             }

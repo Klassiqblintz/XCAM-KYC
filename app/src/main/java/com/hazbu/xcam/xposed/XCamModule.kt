@@ -1,10 +1,12 @@
 package com.hazbu.xcam.xposed
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.SurfaceTexture
 import android.os.Build
 import android.view.Surface
 import androidx.media3.common.util.UnstableApi
+import java.nio.ByteBuffer
 import com.hazbu.xcam.core.audio.MediaCodecAudioDecoder
 import com.hazbu.xcam.core.capture.CaptureManager
 import com.hazbu.xcam.core.capture.MediaCodecYuvDecoder
@@ -21,6 +23,7 @@ import com.hazbu.xcam.utils.UIUtils
 import com.hazbu.xcam.data.Constants
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
+import io.github.libxposed.api.XposedModuleInterface.PackageReadyParam
 import android.os.SystemClock
 import java.io.ByteArrayInputStream
 
@@ -35,7 +38,13 @@ class XCamModule : XposedModule() {
     private val yuvLock = Any()
     private val audioLock = Any()
 
-    private val injectors = XCamInjectors(this)
+    private val cameraHook = CameraHook(this)
+    private val camera2Hook = Camera2Hook(this)
+    private val imageReaderHook = ImageReaderHook(this)
+    private val captureHook = CaptureHook(this, imageReaderHook)
+    private val webRtcHook = WebRtcHook(this)
+    private val audioHook = AudioHook(this)
+    private val injectors = XCamInjectors(this, cameraHook, camera2Hook, imageReaderHook, captureHook, webRtcHook, audioHook)
     private val settings = SettingsManager()
     private val surfaceManager = SurfaceManager { printLog(it) }
     private val surfaceProvider = SurfaceProvider { printLog(it) }
@@ -115,9 +124,9 @@ class XCamModule : XposedModule() {
     }
 
     fun injectYuvFrame(image: android.media.Image, width: Int, height: Int) {
-        val path = settings.mediaPath
-        val ctx = mContext
-        if (path != null && ctx != null && path.lowercase().endsWith(".mp4")) {
+        val path = settings.mediaPath ?: return
+        val ctx = mContext ?: return
+        if (path.lowercase().endsWith(".mp4")) {
             val decoder = getOrCreateYuvDecoder(ctx, path)
             val frame = decoder.getNextFrame()
             if (frame != null) {
@@ -132,11 +141,16 @@ class XCamModule : XposedModule() {
     }
 
     fun handleCapture(width: Int, height: Int): ByteArray? {
-        return handleCapture(
+        val path = settings.mediaPath ?: return null
+        return captureManager.handleCapture(
+            path = path,
             width = width,
             height = height,
             rotationAngle = settings.rotationAngle,
-            isMirrored = settings.isMirrored
+            isMirrored = settings.isMirrored,
+            maxSizeBytes = 256 * 1024,
+            isIgnoringHooks = { isIgnoringHooks() },
+            setIgnoringHooks = { setIgnoringHooks(it) }
         )
     }
 
@@ -202,7 +216,7 @@ class XCamModule : XposedModule() {
     }
 
     fun injectAudioBuffer(buffer: ByteBuffer, length: Int) {
-        val path = settings.mediaPath
+        val path = settings.mediaPath ?: return
         val ctx = mContext ?: return
         val decoder = getOrCreateAudioDecoder(ctx, path)
         val frame = decoder.getNextAudioFrame()
@@ -222,11 +236,13 @@ class XCamModule : XposedModule() {
 
     fun getDummySurface(): Surface = engine.getDummySurface()
 
-    override fun moduleStarted() {
-        logInit("xCam module started")
+    override fun onModuleLoaded(param: XposedModuleInterface.ModuleLoadedParam) {
+        logInit("xCam module started (process: ${param.processName})")
+        mContext = param.applicationContext
+        isInitialized = true
     }
 
-    override fun packageReady(param: XposedModuleInterface.PackageReadyParam) {
+    override fun onPackageReady(param: PackageReadyParam) {
         if (param.packageName == mContext?.packageName) return
         if (hooksInstalled) return
 
@@ -238,15 +254,12 @@ class XCamModule : XposedModule() {
         }
     }
 
-    override fun initModuleContext(moduleContext: XposedModuleInterface.ModuleContext) {
-        mContext = moduleContext.modulePath.applicationContext
-        isInitialized = true
-        logInit("Module context initialized")
+    override fun onPackageLoaded(param: XposedModuleInterface.PackageLoadedParam) {
+        logHook("onPackageLoaded: ${param.packageName}")
     }
 
-    override fun initZygote(param: XposedModuleInterface.ModuleContext) {
-        mContext = param.zygote.initialApplication.context
-        logInit("Zygote initialized")
+    override fun onSystemServerStarting(param: XposedModuleInterface.SystemServerStartingParam) {
+        logHook("onSystemServerStarting")
     }
 }
 
