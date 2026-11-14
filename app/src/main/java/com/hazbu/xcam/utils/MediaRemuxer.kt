@@ -73,7 +73,7 @@ object MediaRemuxer {
                 bufferInfo.offset = 0
                 bufferInfo.size = sampleSize
                 bufferInfo.flags = flags
-                bufferInfo.presentationTimestampMs = ct / 1000
+                bufferInfo.presentationTimestampUs = ct
 
                 if ((flags and MediaExtractor.SAMPLE_FLAG_SYNC) != 0) {
                     // Seek to start of this sync frame and copy the full sample
@@ -85,17 +85,17 @@ object MediaRemuxer {
                             break
                         }
                         bufferInfo.size = s
-                        bufferInfo.presentationTimestampMs = extractor.sampleTime / 1000
+                        bufferInfo.presentationTimestampUs = extractor.sampleTime
                         bufferInfo.flags = extractor.sampleFlags
-                        val bb = ByteBuffer.wrap(buffer, 0, s)
+                        val bb = java.nio.ByteBuffer.wrap(buffer, 0, s)
                         muxer.writeSampleData(videoOutTrack, bb, bufferInfo)
                         extractor.advance()
                     }
                 } else {
                     bufferInfo.size = sampleSize
-                    bufferInfo.presentationTimestampMs = extractor.sampleTime / 1000
+                    bufferInfo.presentationTimestampUs = extractor.sampleTime
                     bufferInfo.flags = flags
-                    val bb = ByteBuffer.wrap(buffer, 0, sampleSize)
+                    val bb = java.nio.ByteBuffer.wrap(buffer, 0, sampleSize)
                     muxer.writeSampleData(videoOutTrack, bb, bufferInfo)
                     extractor.advance()
                 }
@@ -113,9 +113,9 @@ object MediaRemuxer {
                     }
                     bufferInfo.offset = 0
                     bufferInfo.size = s
-                    bufferInfo.presentationTimestampMs = extractor.sampleTime / 1000
+                    bufferInfo.presentationTimestampUs = extractor.sampleTime
                     bufferInfo.flags = extractor.sampleFlags
-                    val bb = ByteBuffer.wrap(buffer, 0, s)
+                    val bb = java.nio.ByteBuffer.wrap(buffer, 0, s)
                     muxer.writeSampleData(audioOutTrack, bb, bufferInfo)
                     extractor.advance()
                 }

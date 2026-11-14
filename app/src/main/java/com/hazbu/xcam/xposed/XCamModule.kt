@@ -162,7 +162,7 @@ class XCamModule : XposedModule() {
         rotationAngle: Int = 0,
         isMirrored: Boolean = false
     ): ByteArray? {
-        val path = settings.mediaPath
+        val path = settings.mediaPath ?: return null
         val ctx = mContext ?: return null
 
         return captureManager.handleCapture(
@@ -239,11 +239,13 @@ class XCamModule : XposedModule() {
 
     override fun onModuleLoaded(param: XposedModuleInterface.ModuleLoadedParam) {
         logInit("xCam module started (process: ${param.processName})")
-        mContext = param.appContext ?: return
-        isInitialized = true
     }
 
     override fun onPackageReady(param: PackageReadyParam) {
+        logInit("xCam package ready: ${param.packageName}")
+        if (mContext == null) {
+            mContext = param.applicationContext
+        }
         if (param.packageName == mContext?.packageName) return
         if (hooksInstalled) return
 
