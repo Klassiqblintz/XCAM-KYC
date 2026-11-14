@@ -22,6 +22,10 @@ import com.hazbu.xcam.core.surface.SurfaceProvider
 import com.hazbu.xcam.core.telemetry.PipelineTracker
 import com.hazbu.xcam.data.Constants
 import com.hazbu.xcam.utils.Logger
+import android.os.Bundle
+import android.os.IBinder
+import android.os.ParcelFileDescriptor
+import io.github.libxposed.service.IXposedService
 import io.github.libxposed.service.XposedService
 import io.github.libxposed.service.XposedServiceHelper
 import java.util.Timer
@@ -58,7 +62,25 @@ class BypassService : Service(), XposedServiceHelper.OnServiceListener {
     private var updateTask: TimerTask? = null
 
     private var xposedService: XposedService? = null
-    private var xposedBinder: android.os.IBinder? = null
+
+    private val xposedStub = object : IXposedService.Stub() {
+        override fun getApiVersion(): Int = XposedService.API_102
+        override fun getFrameworkName(): String = "libxposed"
+        override fun getFrameworkVersion(): String = "102.0"
+        override fun getFrameworkVersionCode(): Long = 102L
+        override fun getFrameworkProperties(): Long = 0L
+        override fun getScope(): List<String> = emptyList()
+        override fun requestScope(packages: List<String>, callback: IXposedScopeCallback) {}
+        override fun removeScope(packages: List<String>) {}
+        override fun getRunningTargets(): List<io.github.libxposed.service.HookedProcess> = emptyList()
+        override fun hotReloadModule(targetId: Long, data: Bundle?, callback: io.github.libxposed.service.IHotReloadCallback) {}
+        override fun requestRemotePreferences(group: String): Bundle? = null
+        override fun updateRemotePreferences(group: String, diff: Bundle?) {}
+        override fun deleteRemotePreferences(group: String) {}
+        override fun listRemoteFiles(): Array<String> = emptyArray()
+        override fun openRemoteFile(name: String): ParcelFileDescriptor? = null
+        override fun deleteRemoteFile(name: String): Boolean = false
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -83,12 +105,10 @@ class BypassService : Service(), XposedServiceHelper.OnServiceListener {
     }
 
     override fun onBind(intent: Intent?): IBinder? {
-        if (xposedBinder == null) {
-            val service = io.github.libxposed.service.XposedService(this)
-            xposedService = service
-            xposedBinder = service.getBinder()
+        if (xposedService == null) {
+            xposedService = XposedService(xposedStub)
         }
-        return xposedBinder
+        return xposedService?.asInterface()?.asBinder()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -184,12 +204,12 @@ class BypassService : Service(), XposedServiceHelper.OnServiceListener {
         startForeground(NOTIFICATION_ID, notification)
     }
 
-    override fun onServiceBind(service: XposedService?) {
+    override fun onServiceBind(service: XposedService) {
         isBound = true
         log("[+] Bound to XposedService")
     }
 
-    override fun onServiceDied(service: XposedService?) {
+    override fun onServiceDied(service: XposedService) {
         isBound = false
         log("[-] XposedService died")
     }

@@ -17,6 +17,7 @@ import com.hazbu.xcam.core.settings.SettingsManager
 import com.hazbu.xcam.core.surface.SurfaceManager
 import com.hazbu.xcam.core.surface.SurfaceProvider
 import com.hazbu.xcam.core.telemetry.PipelineTracker
+import com.hazbu.xcam.hooks.*
 import com.hazbu.xcam.utils.Logger
 import com.hazbu.xcam.utils.SystemUtils
 import com.hazbu.xcam.utils.UIUtils
@@ -84,7 +85,7 @@ class XCamModule : XposedModule() {
     fun logInit(msg: String) = Logger.i(this, "[INIT] $msg")
     fun logHook(msg: String) = Logger.d(this, "[HOOK] $msg")
 
-    fun showToast(message: String) = UIUtils.showToast(mContext, message) { printLog(it) }
+    fun showToast(message: String) = UIUtils.showToast(mContext!!, message) { printLog(it) }
 
     fun isCapturingState() = captureManager.isCapturing
 
@@ -177,7 +178,7 @@ class XCamModule : XposedModule() {
     }
 
     fun handleStreamFrame(): ByteArray? {
-        val path = settings.mediaPath
+        val path = settings.mediaPath ?: return null
         val ctx = mContext ?: return null
 
         return captureManager.handleStreamFrame(
@@ -192,7 +193,7 @@ class XCamModule : XposedModule() {
     }
 
     fun injectAudioBytes(buffer: ByteArray, offset: Int, length: Int) {
-        val path = settings.mediaPath
+        val path = settings.mediaPath ?: return
         val ctx = mContext ?: return
         val decoder = getOrCreateAudioDecoder(ctx, path)
         val frame = decoder.getNextAudioFrame()
@@ -203,7 +204,7 @@ class XCamModule : XposedModule() {
     }
 
     fun injectAudioShorts(buffer: ShortArray, offset: Int, length: Int) {
-        val path = settings.mediaPath
+        val path = settings.mediaPath ?: return
         val ctx = mContext ?: return
         val decoder = getOrCreateAudioDecoder(ctx, path)
         val frame = decoder.getNextAudioFrame()
@@ -238,7 +239,7 @@ class XCamModule : XposedModule() {
 
     override fun onModuleLoaded(param: XposedModuleInterface.ModuleLoadedParam) {
         logInit("xCam module started (process: ${param.processName})")
-        mContext = param.applicationContext
+        mContext = param.appContext ?: return
         isInitialized = true
     }
 

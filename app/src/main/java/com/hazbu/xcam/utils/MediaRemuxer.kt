@@ -73,7 +73,7 @@ object MediaRemuxer {
                 bufferInfo.offset = 0
                 bufferInfo.size = sampleSize
                 bufferInfo.flags = flags
-                bufferInfo.timeUs = ct
+                bufferInfo.presentationTimestampMs = ct / 1000
 
                 if ((flags and MediaExtractor.SAMPLE_FLAG_SYNC) != 0) {
                     // Seek to start of this sync frame and copy the full sample
@@ -85,7 +85,7 @@ object MediaRemuxer {
                             break
                         }
                         bufferInfo.size = s
-                        bufferInfo.timeUs = extractor.sampleTime
+                        bufferInfo.presentationTimestampMs = extractor.sampleTime / 1000
                         bufferInfo.flags = extractor.sampleFlags
                         val bb = ByteBuffer.wrap(buffer, 0, s)
                         muxer.writeSampleData(videoOutTrack, bb, bufferInfo)
@@ -93,7 +93,7 @@ object MediaRemuxer {
                     }
                 } else {
                     bufferInfo.size = sampleSize
-                    bufferInfo.timeUs = extractor.sampleTime
+                    bufferInfo.presentationTimestampMs = extractor.sampleTime / 1000
                     bufferInfo.flags = flags
                     val bb = ByteBuffer.wrap(buffer, 0, sampleSize)
                     muxer.writeSampleData(videoOutTrack, bb, bufferInfo)
@@ -113,7 +113,7 @@ object MediaRemuxer {
                     }
                     bufferInfo.offset = 0
                     bufferInfo.size = s
-                    bufferInfo.timeUs = extractor.sampleTime
+                    bufferInfo.presentationTimestampMs = extractor.sampleTime / 1000
                     bufferInfo.flags = extractor.sampleFlags
                     val bb = ByteBuffer.wrap(buffer, 0, s)
                     muxer.writeSampleData(audioOutTrack, bb, bufferInfo)
