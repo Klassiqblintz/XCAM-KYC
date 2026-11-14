@@ -35,7 +35,7 @@ class CaptureManager(
     private var lastStreamRequestAtMs = 0L
     @Volatile private var streamExtractionRunning = false
 
-    private fun log(msg: String = "[CAPTURE] $msg") = logAction(log)
+    private fun log(msg: String = "[CAPTURE] " + msg) = logAction(msg)
 
     fun reset() {
         uiHandler.removeCallbacksAndMessages(null)
@@ -134,13 +134,13 @@ class CaptureManager(
         rotationAngle: Int,
         isMirrored: Boolean,
         isIgnoringHooks: () -> Boolean,
-        setIgnoringHooks: (Boolean -> Unit)
+        setIgnoringHooks: (Boolean) -> Unit
     ): ByteArray? {
         val context = contextProvider() ?: return null
         val actualPath = path ?: return null
 
         if (!actualPath.lowercase().endsWith(".mp4")) {
-            return handleCapture(path, width, height, rotationAngle, isMirrored, Int.MAX_VALUE, isIgnoringHooks, setIgnoringHooks)
+            return handleCapture(path, width, height, rotationAngle, isMirrored, Int.MAX_VALUE, isIgnoringHooks, setIgnoringHooks, null)
         }
 
         val now = SystemClock.elapsedRealtime()
@@ -158,8 +158,9 @@ class CaptureManager(
                 streamExecutor.submit {
                     performExtraction(
                         context, actualPath, width, height, rotationAngle, isMirrored,
-                        (now - streamStartedAtMs).toInt(), Int.MAX_VALUE, setIgnoringHooks
+                        (now - streamStartedAtMs).toInt(), Int.MAX_VALUE, setIgnoringHooks, null
                     ).also { cachedStreamFrame = it }
+                }.get()
                 }
                 null
             }

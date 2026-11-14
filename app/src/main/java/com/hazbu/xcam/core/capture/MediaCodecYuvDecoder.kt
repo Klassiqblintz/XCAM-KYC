@@ -3,10 +3,7 @@ package com.hazbu.xcam.core.capture
 import android.content.Context
 import android.media.MediaCodec
 import android.media.MediaFormat
-import android.os.Build
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.VideoFrameMetadata
-import java.nio.ByteBuffer
 
 /**
  * Decodes video frames to YUV420 for capture extraction.
@@ -21,6 +18,10 @@ class MediaCodecYuvDecoder(
     private var isRunning = false
     private var videoTrack = -1
 
+    // Video dimensions from the format
+    private var frameWidth = 0
+    private var frameHeight = 0
+
     fun start() {
         try {
             extractor = android.media.MediaExtractor().apply {
@@ -34,6 +35,10 @@ class MediaCodecYuvDecoder(
                 }
                 if (videoTrack < 0) throw IllegalStateException("No video track found")
                 selectTrack(videoTrack)
+                // Get dimensions from format
+                val fmt = getTrackFormat(videoTrack)
+                frameWidth = fmt.getInteger(MediaFormat.KEY_WIDTH)
+                frameHeight = fmt.getInteger(MediaFormat.KEY_HEIGHT)
             }
 
             val format = extractor!!.getTrackFormat(videoTrack)
@@ -76,11 +81,11 @@ class MediaCodecYuvDecoder(
         val outputIndex = decoder!!.dequeueOutputBuffer(infoOut, 1000)
         if (outputIndex >= 0) {
             val outBuffer = decoder!!.getOutputBuffer(outputIndex)
-            val time = infoOut.timeStampUs / 1000 // ms
+            val time = infoOut.presentationTimeUs / 1000 // ms to us
             if (outBuffer != null) {
                 val data = ByteArray(outBuffer.remaining())
                 outBuffer.get(data)
-                val frame = YuvFrame(data, infoOut.width, infoOut.height, time)
+                val frame = YuvFrame(data, frameWidth, frameHeight, time)
                 decoder!!.releaseOutputBuffer(outputIndex, false)
                 return frame
             }
@@ -90,7 +95,7 @@ class MediaCodecYuvDecoder(
     }
 
     val currentTimestampMs: Long
-        get() = infoOut.timeStampUs / 1000
+        get() = extractor?.sampleTime?.let { it / 1000 } ?: 0L
 
     class YuvFrame(val data: ByteArray, val width: Int, val height: Int, val timestampMs: Long)
 

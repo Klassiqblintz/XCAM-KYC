@@ -31,7 +31,7 @@ object XCamCapture {
                 val retriever = MediaMetadataRetriever()
                 retriever.setDataSource(path)
                 val frame = retriever.getFrameAtTime(
-                    (timestampMs * 1000L).toInt(),
+                    (timestampMs.toLong() * 1000L),
                     MediaMetadataRetriever.OPTION_CLOSEST
                 )
 
@@ -62,13 +62,13 @@ object XCamCapture {
 
         for (y in 0 until height) {
             for (x in 0 until width) {
-                val Y = yuv[yIndex] and 0xFF
-                val U = yuv[uvIndex + ((y / 2) * (width / 2) + (x / 2)) * 2] and 0xFF
-                val V = yuv[uvIndex + ((y / 2) * (width / 2) + (x / 2)) * 2 + 1] and 0xFF
+                val Y = yuv[yIndex].toUInt() and 0xFFu
+                val U = yuv[uvIndex + ((y / 2) * (width / 2) + (x / 2)) * 2].toUInt() and 0xFFu
+                val V = yuv[uvIndex + ((y / 2) * (width / 2) + (x / 2)) * 2 + 1].toUInt() and 0xFFu
 
-                var r = (Y + (V - 128) * 1.402).toInt().coerceIn(0, 255)
-                var g = (Y - (V - 128) * 0.34414 - (U - 128) * 0.71414).toInt().coerceIn(0, 255)
-                var b = (Y + (U - 128) * 1.772).toInt().coerceIn(0, 255)
+                var r = (Y.toInt() + (V.toInt() - 128) * 1.402).toInt().coerceIn(0, 255)
+                var g = (Y.toInt() - (V.toInt() - 128) * 0.34414 - (U.toInt() - 128) * 0.71414).toInt().coerceIn(0, 255)
+                var b = (Y.toInt() + (U.toInt() - 128) * 1.772).toInt().coerceIn(0, 255)
 
                 rgb[y * width + x] = 0xFF000000.toInt() or (r shl 16) or (g shl 8) or b
                 yIndex++
