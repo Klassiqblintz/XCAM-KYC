@@ -33,7 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.hazbu.xcam.BuildConfig
+import android.os.Build
 import com.hazbu.xcam.R
 import com.hazbu.xcam.data.Constants
 import com.hazbu.xcam.utils.MediaConverter
@@ -157,10 +157,12 @@ class MainActivity : ComponentActivity() {
     private fun loadCameraApps() {
         isLoadingApps = true
         try {
-            val cameraApps = packageManager.queryIntentActivities(
-                Intent(android.hardware.Camera.ACTION_OPEN_CAMERA),
-                PackageManager.MATCH_ALL
-            ).map { it.activityInfo.packageName }.toSet()
+            val cameraApps = try {
+                packageManager.queryIntentActivities(
+                    Intent("android.hardware.camera.action.CAPTURE"),
+                    PackageManager.MATCH_ALL
+                ).map { it.activityInfo.packageName }.toSet()
+            } catch (_: Exception) { setOf() }
 
             // Also query for apps that use Camera2
             val camera2Apps = try {
@@ -176,13 +178,18 @@ class MainActivity : ComponentActivity() {
                     pkg.packageName != packageName &&
                     !pkg.packageName.startsWith("com.hazbu.") &&
                     !pkg.packageName.startsWith("io.github.libxposed") &&
-                    pkg.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM == 0 &&
+                    pkg.applicationInfo?.let { ai -> ai.flags and ApplicationInfo.FLAG_SYSTEM == 0 } == true &&
                     (pkg.requestedPermissions?.any {
                         it == Manifest.permission.CAMERA ||
                         it == "android.permission.CAMERA"
                     } == true)
                 }
-                .map { it to it.applicationInfo.loadLabel(packageManager).toString() }
+                .mapNotNull { pkg ->
+                    pkg.applicationInfo?.let { ai ->
+                        val label = packageManager.getResourcesForApplication(ai)?.getString(ai.labelRes) ?: ""
+                        pkg to label
+                    }
+                }
                 .filter { (_, label) -> label.isNotEmpty() }
 
             appList = allPackages
@@ -269,6 +276,7 @@ data class AppInfo(
 
 // Theme
 @Suppress("unused")
+@Composable
 private fun xCamTheme(content: @Composable () -> Unit) {
     val colorScheme = androidx.compose.material3.darkColorScheme(
         primary = Color(0xFF6750A4),
@@ -498,7 +506,7 @@ fun AppSelectionCard(
             Spacer(modifier = Modifier.height(8.dp))
 
             if (selectedAppPackage != null) {
-                val appName = getAppName(selectedAppPackage)
+                val appName = getAppName(LocalContext.current, selectedAppPackage)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -558,7 +566,8 @@ fun AppSelectionCard(
                                 onSelect = {
                                     setSelectedAppPackage(app.packageName)
                                     onShowAppPicker()
-                                }
+                                },
+                                appList = appList
                             )
                         }
                     }
@@ -574,7 +583,7 @@ fun AppSelectionCard(
 }
 
 @Composable
-fun AppRow(app: AppInfo, onSelect: () -> Unit) {
+fun AppRow(app: AppInfo, onSelect: () -> Unit, appList: List<AppInfo>) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -758,16 +767,10 @@ fun InjectButton(
 }
 
 // Helper
-private fun getAppName(packageName: String): String {
+private fun getAppName(context: android.content.Context, packageName: String): String {
     return try {
-        val appInfo = com.hazbu.xcam.MainActivity::class.java
-            .field
-            .apply { isAccessible = true }
-            .get(null) as? android.content.Context
-            ?: return packageName
-
-        val ai = appInfo.packageManager.getApplicationInfo(packageName, 0)
-        appInfo.packageManager.getResourcesForApplication(ai)?.
+        val ai = context.packageManager.getApplicationInfo(packageName, 0)
+        context.packageManager.getResourcesForApplication(ai)?.
             getString(ai.labelRes) ?: packageName
     } catch (_: Exception) {
         packageName

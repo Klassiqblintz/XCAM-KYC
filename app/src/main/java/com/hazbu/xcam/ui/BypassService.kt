@@ -9,8 +9,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
-import android.support.v4.app.NotificationCompat
+import android.os.Looper
+import androidx.core.app.NotificationCompat
 import androidx.media3.common.util.UnstableApi
 import com.hazbu.xcam.core.engine.MediaEngine
 import com.hazbu.xcam.core.engine.XCamEngine
@@ -30,7 +32,7 @@ import java.util.TimerTask
  * Coordinates all hooks and engine components.
  */
 @UnstableApi
-class BypassService : XposedService(), XposedServiceHelper.OnServiceListener {
+class BypassService : Service(), XposedServiceHelper.OnServiceListener {
 
     companion object {
         private const val TAG = "xBypass"
@@ -55,6 +57,10 @@ class BypassService : XposedService(), XposedServiceHelper.OnServiceListener {
     private val updateInterval = 500L
     private var updateTask: TimerTask? = null
 
+    private val xposedService: XposedService by lazy {
+        XposedService(this)
+    }
+
     override fun onCreate() {
         super.onCreate()
         mContext = this
@@ -78,7 +84,7 @@ class BypassService : XposedService(), XposedServiceHelper.OnServiceListener {
     }
 
     override fun onBind(intent: Intent?): IBinder? {
-        return null
+        return xposedService.onBind(intent)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -173,12 +179,12 @@ class BypassService : XposedService(), XposedServiceHelper.OnServiceListener {
         startForeground(NOTIFICATION_ID, notification)
     }
 
-    override fun onServiceBind(service: io.github.libxposed.service.XposedService) {
+    override fun onServiceBind(service: XposedService) {
         isBound = true
         log("[+] Bound to XposedService")
     }
 
-    override fun onServiceDied(service: io.github.libxposed.service.XposedService) {
+    override fun onServiceDied(service: XposedService) {
         isBound = false
         log("[-] XposedService died")
     }

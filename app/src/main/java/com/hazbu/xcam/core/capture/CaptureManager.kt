@@ -8,6 +8,7 @@ import com.hazbu.xcam.data.Constants.DEFAULT_CAPTURE_HEIGHT
 import com.hazbu.xcam.data.Constants.DEFAULT_CAPTURE_WIDTH
 import com.hazbu.xcam.data.Constants.STREAM_FRAME_INTERVAL_MS
 import java.util.concurrent.Executors
+import java.util.concurrent.Future
 
 /**
  * Manages frame extraction for still captures and video streaming.
@@ -18,7 +19,7 @@ class CaptureManager(
     private val logAction: (String) -> Unit,
 ) {
     private val uiHandler = Handler(Looper.getMainLooper())
-    private val streamExecutor = Executors.newSingleThreadExecutor()
+    private val streamExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
     private val streamFrameIntervalMs = STREAM_FRAME_INTERVAL_MS
 
     @Volatile var isCapturing = false
@@ -35,7 +36,7 @@ class CaptureManager(
     private var lastStreamRequestAtMs = 0L
     @Volatile private var streamExtractionRunning = false
 
-    private fun log(msg: String = "[CAPTURE] " + msg) = logAction(msg)
+    private fun log(msg: String): Unit = logAction("[CAPTURE] $msg")
 
     fun reset() {
         uiHandler.removeCallbacksAndMessages(null)
@@ -155,14 +156,14 @@ class CaptureManager(
             if (cached != null) {
                 cached
             } else {
-                streamExecutor.submit {
+                val future: Future<ByteArray?> = streamExecutor.submit {
                     performExtraction(
                         context, actualPath, width, height, rotationAngle, isMirrored,
                         (now - streamStartedAtMs).toInt(), Int.MAX_VALUE, setIgnoringHooks, null
-                    ).also { cachedStreamFrame = it }
-                }.get()
+                    )
                 }
-                null
+                cachedStreamFrame = future.get()
+                cachedStreamFrame
             }
         }
     }
