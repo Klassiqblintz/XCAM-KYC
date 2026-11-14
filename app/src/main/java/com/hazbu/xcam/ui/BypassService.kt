@@ -72,8 +72,6 @@ class BypassService : Service(), XposedServiceHelper.OnServiceListener {
         override fun getScope(): List<String> = emptyList()
         override fun requestScope(packages: List<String>, callback: IXposedScopeCallback) {}
         override fun removeScope(packages: List<String>) {}
-        override fun getRunningTargets(): List<*> = emptyList()
-        override fun hotReloadModule(targetId: Long, data: Bundle?, callback: Any?) {}
         override fun requestRemotePreferences(group: String): Bundle? = null
         override fun updateRemotePreferences(group: String, diff: Bundle?) {}
         override fun deleteRemotePreferences(group: String) {}

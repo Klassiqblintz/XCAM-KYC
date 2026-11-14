@@ -87,7 +87,7 @@ class XCamModule : XposedModule() {
 
     fun showToast(message: String?) {
         if (message.isNullOrEmpty()) return
-        UIUtils.showToast(mContext, message!!) { printLog(it) }
+        UIUtils.showToast(mContext, message!!) { msg -> printLog(msg ?: "") }
     }
 
     fun isCapturingState() = captureManager.isCapturing
@@ -247,9 +247,15 @@ class XCamModule : XposedModule() {
     override fun onPackageReady(param: PackageReadyParam) {
         logInit("xCam package ready: ${param.packageName}")
         if (mContext == null) {
-            val app = android.app.ActivityThread.currentApplication()
-            if (app != null) {
-                mContext = app.applicationContext
+            try {
+                val cls = Class.forName("android.app.ActivityThread")
+                val method = cls.getMethod("currentApplication")
+                val app = method.invoke(null) as? android.app.Application
+                if (app != null) {
+                    mContext = app.applicationContext
+                }
+            } catch (_: Throwable) {
+                // ActivityThread not available, mContext stays null
             }
         }
         if (param.packageName == mContext?.packageName) return
