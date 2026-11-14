@@ -58,7 +58,11 @@ class BypassService : Service(), XposedServiceHelper.OnServiceListener {
     private var updateTask: TimerTask? = null
 
     private val xposedService: XposedService by lazy {
-        XposedService(this)
+        object : XposedService(this@BypassService) {
+            override fun onBind(intent: android.content.Intent?): android.os.IBinder? {
+                return null
+            }
+        }
     }
 
     override fun onCreate() {
@@ -153,7 +157,8 @@ class BypassService : Service(), XposedServiceHelper.OnServiceListener {
                 android.app.NotificationManager.IMPORTANCE_LOW
             ).apply {
                 description = "Camera injection service"
-                setShowWhen(false)
+                setSound(null, null)
+                setVibrationPattern(longArrayOf(0))
             }
             val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             nm.createNotificationChannel(channel)
@@ -168,7 +173,7 @@ class BypassService : Service(), XposedServiceHelper.OnServiceListener {
         )
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_xcam_notification)
+            .setSmallIcon(android.R.drawable.ic_menu_camera)
             .setContentTitle("xCam Bypass")
             .setContentText("Running in background")
             .setPriority(NotificationCompat.PRIORITY_LOW)

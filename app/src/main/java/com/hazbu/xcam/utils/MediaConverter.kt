@@ -12,7 +12,7 @@ object MediaConverter {
             val retriever = MediaMetadataRetriever()
             retriever.setDataSource(path)
             val frame = retriever.getFrameAtTime(
-                (timestampMs * 1000).toInt(),
+                (timestampMs * 1000L),
                 MediaMetadataRetriever.OPTION_CLOSEST
             )
             if (frame != null) {
@@ -35,8 +35,8 @@ object MediaConverter {
 
     fun copyToInternal(context: Context, sourcePath: String, name: String): String? {
         return try {
-            val dest = File(context.filesDir, name)
-            File(sourcePath).inputStream().use { input ->
+            val dest = java.io.File(context.filesDir, name)
+            java.io.File(sourcePath).inputStream().use { input ->
                 FileOutputStream(dest).use { output ->
                     input.copyTo(output)
                 }
@@ -48,7 +48,7 @@ object MediaConverter {
     }
 
     private class ByteArrayOutputStream : java.io.ByteArrayOutputStream() {
-        fun toByteArray(): ByteArray {
+        override fun toByteArray(): ByteArray {
             return this.buf
         }
     }

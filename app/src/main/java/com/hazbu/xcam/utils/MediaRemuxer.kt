@@ -77,27 +77,13 @@ object MediaRemuxer {
                             isRead = true
                             break
                         }
-                        muxer.writeSampleData(
-                            videoOutTrack,
-                            buffer,
-                              MediaMuxer.SampleInfo.Builder()
-                                  .setSize(s)
-                                  .setTimeUs(extractor.sampleTime)
-                                  .setFlags(extractor.sampleFlags)
-                                  .build()
-                        )
+                        val bb = java.nio.ByteBuffer.wrap(buffer, 0, s)
+                        muxer.writeSampleData(videoOutTrack, bb, extractor.sampleTime, flags)
                         extractor.advance()
                     }
                 } else {
-                    muxer.writeSampleData(
-                        videoOutTrack,
-                        buffer,
-                        MediaMuxer.SampleInfo.Builder()
-                            .setSize(sampleSize)
-                            .setTimeUs(extractor.sampleTime)
-                            .setFlags(extractor.sampleFlags)
-                            .build()
-                    )
+                    val bb = java.nio.ByteBuffer.wrap(buffer, 0, sampleSize)
+                    muxer.writeSampleData(videoOutTrack, bb, extractor.sampleTime, flags)
                     extractor.advance()
                 }
             }
@@ -112,15 +98,8 @@ object MediaRemuxer {
                         aRead = true
                         break
                     }
-                    muxer.writeSampleData(
-                        audioOutTrack.toLong(),
-                        buffer,
-                        MediaMuxer.SampleInfo.Builder()
-                            .setSize(s)
-                            .setTimeUs(extractor.sampleTime)
-                            .setFlags(extractor.sampleFlags)
-                            .build()
-                    )
+                    val bb = java.nio.ByteBuffer.wrap(buffer, 0, s)
+                    muxer.writeSampleData(audioOutTrack, bb, extractor.sampleTime, flags)
                     extractor.advance()
                 }
             }

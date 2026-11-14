@@ -156,7 +156,7 @@ class CaptureManager(
             if (cached != null) {
                 cached
             } else {
-                val future: Future<ByteArray?> = streamExecutor.submit {
+                val future: Future<out ByteArray?> = streamExecutor.submit {
                     performExtraction(
                         context, actualPath, width, height, rotationAngle, isMirrored,
                         (now - streamStartedAtMs).toInt(), Int.MAX_VALUE, setIgnoringHooks, null

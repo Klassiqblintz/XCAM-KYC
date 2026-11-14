@@ -17,6 +17,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -560,14 +561,14 @@ fun AppSelectionCard(
                             .height(400.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        items(appList) { app ->
+                        items(appList) { appItem ->
                             AppRow(
-                                app = app,
+                                app = appItem,
                                 onSelect = {
-                                    setSelectedAppPackage(app.packageName)
+                                    setSelectedAppPackage(appItem.packageName)
                                     onShowAppPicker()
                                 },
-                                appList = appList
+                                allApps = appList
                             )
                         }
                     }
@@ -583,7 +584,7 @@ fun AppSelectionCard(
 }
 
 @Composable
-fun AppRow(app: AppInfo, onSelect: () -> Unit, appList: List<AppInfo>) {
+fun AppRow(app: AppInfo, onSelect: () -> Unit, allApps: List<AppInfo>) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
