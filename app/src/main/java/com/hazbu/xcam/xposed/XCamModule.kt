@@ -1,6 +1,5 @@
 package com.hazbu.xcam.xposed
 
-import android.app.ActivityThread
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.SurfaceTexture
@@ -86,9 +85,9 @@ class XCamModule : XposedModule() {
     fun logInit(msg: String) = Logger.i(this, "[INIT] $msg")
     fun logHook(msg: String) = Logger.d(this, "[HOOK] $msg")
 
-    fun showToast(message: String) {
-        if (message.isEmpty()) return
-        UIUtils.showToast(mContext, message) { printLog(it) }
+    fun showToast(message: String?) {
+        if (message.isNullOrEmpty()) return
+        UIUtils.showToast(mContext, message!!) { printLog(it) }
     }
 
     fun isCapturingState() = captureManager.isCapturing
@@ -248,7 +247,7 @@ class XCamModule : XposedModule() {
     override fun onPackageReady(param: PackageReadyParam) {
         logInit("xCam package ready: ${param.packageName}")
         if (mContext == null) {
-            val app = ActivityThread.currentApplication()
+            val app = android.app.ActivityThread.currentApplication()
             if (app != null) {
                 mContext = app.applicationContext
             }

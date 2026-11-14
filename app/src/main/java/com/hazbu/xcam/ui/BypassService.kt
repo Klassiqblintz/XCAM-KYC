@@ -24,8 +24,6 @@ import com.hazbu.xcam.core.surface.SurfaceProvider
 import com.hazbu.xcam.core.telemetry.PipelineTracker
 import com.hazbu.xcam.data.Constants
 import com.hazbu.xcam.utils.Logger
-import io.github.libxposed.service.HookedProcess
-import io.github.libxposed.service.IHotReloadCallback
 import io.github.libxposed.service.IXposedScopeCallback
 import io.github.libxposed.service.IXposedService
 import io.github.libxposed.service.XposedService
@@ -66,16 +64,16 @@ class BypassService : Service(), XposedServiceHelper.OnServiceListener {
     private var xposedService: XposedService? = null
 
     private val xposedStub = object : IXposedService.Stub() {
-        override fun getApiVersion(): Int = IXposedService.API_102
+        override fun getApiVersion(): Int = 101
         override fun getFrameworkName(): String = "libxposed"
-        override fun getFrameworkVersion(): String = "102.0"
-        override fun getFrameworkVersionCode(): Long = 102L
+        override fun getFrameworkVersion(): String = "101.0"
+        override fun getFrameworkVersionCode(): Long = 101L
         override fun getFrameworkProperties(): Long = 0L
         override fun getScope(): List<String> = emptyList()
         override fun requestScope(packages: List<String>, callback: IXposedScopeCallback) {}
         override fun removeScope(packages: List<String>) {}
-        override fun getRunningTargets(): List<HookedProcess> = emptyList()
-        override fun hotReloadModule(targetId: Long, data: Bundle?, callback: IHotReloadCallback) {}
+        override fun getRunningTargets(): List<*> = emptyList()
+        override fun hotReloadModule(targetId: Long, data: Bundle?, callback: Any?) {}
         override fun requestRemotePreferences(group: String): Bundle? = null
         override fun updateRemotePreferences(group: String, diff: Bundle?) {}
         override fun deleteRemotePreferences(group: String) {}
