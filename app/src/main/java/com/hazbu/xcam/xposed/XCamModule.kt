@@ -144,20 +144,6 @@ class XCamModule : XposedModule() {
         }
     }
 
-    fun handleCapture(width: Int, height: Int): ByteArray? {
-        val path = settings.mediaPath ?: return null
-        return captureManager.handleCapture(
-            path = path,
-            width = width,
-            height = height,
-            rotationAngle = settings.rotationAngle,
-            isMirrored = settings.isMirrored,
-            maxSizeBytes = 256 * 1024,
-            isIgnoringHooks = { isIgnoringHooks() },
-            setIgnoringHooks = { setIgnoringHooks(it) }
-        )
-    }
-
     @JvmOverloads
     fun handleCapture(
         width: Int = 0,
