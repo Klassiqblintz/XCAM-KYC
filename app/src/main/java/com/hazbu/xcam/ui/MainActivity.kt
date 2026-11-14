@@ -634,7 +634,7 @@ fun TransformCard(
                     onClick = onRotateLeft,
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A148C))
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.RotateLeft, "Rotate left", tint = Color.White)
+                    Icon(Icons.Filled.RotateLeft, "Rotate left", tint = Color.White)
                     Text("Left", color = Color.White, fontSize = 12.sp)
                 }
 
@@ -661,7 +661,7 @@ fun TransformCard(
                     onClick = onRotateRight,
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A148C))
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.RotateRight, "Rotate right", tint = Color.White)
+                    Icon(Icons.Filled.RotateRight, "Rotate right", tint = Color.White)
                     Text("Right", color = Color.White, fontSize = 12.sp)
                 }
             }

@@ -42,13 +42,13 @@ class BypassService : Service(), XposedServiceHelper.OnServiceListener {
         private const val TAG = "xBypass"
         private const val NOTIFICATION_ID = Constants.SERVICE_NOTIFICATION_ID
         private const val CHANNEL_ID = Constants.SERVICE_NOTIFICATION_CHANNEL_ID
-        private const val SERVICE_AUTHORITY = Constants.SERVICE_AUTHORITY
+        private const val SERVICE_AUTHORITY = "com.hazbu.xcam.XposedService"
 
         @JvmStatic
         fun getService(context: Context): BypassService? {
             return try {
                 val helper = XposedServiceHelper.getService(context, SERVICE_AUTHORITY)
-                helper?.getService() as? BypassService
+                helper as? BypassService
             } catch (_: Exception) {
                 null
             }
