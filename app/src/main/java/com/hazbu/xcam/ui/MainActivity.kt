@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
     private var service: BypassService? = null
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
-            service = (binder as? BypassService)?.apply { /* direct access */ }
+            service = BypassService.getService(this@MainActivity)
         }
         override fun onServiceDisconnected(name: ComponentName?) { service = null }
     }
@@ -187,7 +187,7 @@ class MainActivity : ComponentActivity() {
                 }
                 .mapNotNull { pkg ->
                     pkg.applicationInfo?.let { ai ->
-                        val label = packageManager.getResourcesForApplication(ai)?.getString(ai.labelRes) ?: ""
+                        val label = packageManager.getResourcesForApplication(ai).getString(ai.labelRes) ?: ""
                         pkg to label
                     }
                 }
@@ -195,7 +195,7 @@ class MainActivity : ComponentActivity() {
 
             appList = allPackages
                 .filter { (pkg, _) -> cameraApps.contains(pkg.packageName) || camera2Apps.contains(pkg.packageName) }
-                .map { (pkg, label) -> AppInfo(pkg.packageName, label as String) }
+                .map { (pkg, label) -> AppInfo(pkg.packageName, label) }
                 .sortedBy { it.name }
 
             // Add some common KYC apps manually
@@ -634,7 +634,7 @@ fun TransformCard(
                     onClick = onRotateLeft,
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A148C))
                 ) {
-                    Icon(Icons.Default.RotateLeft, "Rotate left", tint = Color.White)
+                    Icon(Icons.AutoMirrored.Filled.RotateLeft, "Rotate left", tint = Color.White)
                     Text("Left", color = Color.White, fontSize = 12.sp)
                 }
 
@@ -661,7 +661,7 @@ fun TransformCard(
                     onClick = onRotateRight,
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A148C))
                 ) {
-                    Icon(Icons.Default.RotateRight, "Rotate right", tint = Color.White)
+                    Icon(Icons.AutoMirrored.Filled.RotateRight, "Rotate right", tint = Color.White)
                     Text("Right", color = Color.White, fontSize = 12.sp)
                 }
             }
@@ -772,8 +772,8 @@ fun InjectButton(
 private fun getAppName(context: android.content.Context, packageName: String): String {
     return try {
         val ai = context.packageManager.getApplicationInfo(packageName, 0)
-        context.packageManager.getResourcesForApplication(ai)?.
-            getString(ai.labelRes) ?: packageName
+        context.packageManager.getResourcesForApplication(ai)
+            .getString(ai.labelRes) ?: packageName
     } catch (_: Exception) {
         packageName
     }

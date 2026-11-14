@@ -42,6 +42,17 @@ class BypassService : Service(), XposedServiceHelper.OnServiceListener {
         private const val TAG = "xBypass"
         private const val NOTIFICATION_ID = Constants.SERVICE_NOTIFICATION_ID
         private const val CHANNEL_ID = Constants.SERVICE_NOTIFICATION_CHANNEL_ID
+        private const val SERVICE_AUTHORITY = Constants.SERVICE_AUTHORITY
+
+        @JvmStatic
+        fun getService(context: Context): BypassService? {
+            return try {
+                val helper = XposedServiceHelper.getService(context, SERVICE_AUTHORITY)
+                helper?.getService() as? BypassService
+            } catch (_: Exception) {
+                null
+            }
+        }
     }
 
     private var mContext: Context? = null
@@ -125,6 +136,7 @@ class BypassService : Service(), XposedServiceHelper.OnServiceListener {
             }
             "ACTION_STOP" -> {
                 stopInjection()
+                @Suppress("DEPRECATION")
                 stopForeground(true)
                 stopSelf()
             }

@@ -5,14 +5,17 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
+import android.os.SystemClock;
 
 import com.hazbu.xcam.data.Constants;
 import com.hazbu.xcam.xposed.XCamModule;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.List;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
@@ -142,7 +145,7 @@ public class CaptureHook {
                                         break;
                                     }
                                 }
-                                return chain.proceed(args);
+                                return chain.proceed(args.toArray(new Object[0]));
                             }
                         }
                         return chain.proceed();
@@ -168,8 +171,8 @@ public class CaptureHook {
                             int targetH = activeH > 0 ? activeH : Constants.DEFAULT_CAPTURE_HEIGHT;
                             byte[] injected = module.handleCapture(targetW, targetH);
                             if (injected != null) {
-                                Bitmap.CompressFormat format = (Bitmap.CompressFormat) chain.getArgs()[0];
-                                OutputStream out = (OutputStream) chain.getArgs()[2];
+                                Bitmap.CompressFormat format = (Bitmap.CompressFormat) chain.getArgs().get(0);
+                                OutputStream out = (OutputStream) chain.getArgs().get(2);
                                 if (out != null && format != null) {
                                     try {
                                         out.write(injected);
@@ -219,7 +222,7 @@ public class CaptureHook {
                 if (method.getName().equals("setOutputFile") || method.getName().equals("setOutputFile")) {
                     module.hook(method).intercept(chain -> {
                         if (module.getMediaPath() != null) {
-                            Object arg0 = chain.getArgs()[0];
+                            Object arg0 = chain.getArgs().get(0);
                             if (arg0 instanceof String) {
                                 String path = (String) arg0;
                                 module.recordPipelineNode("MediaRecorder#setOutputFile(" + path + ")");

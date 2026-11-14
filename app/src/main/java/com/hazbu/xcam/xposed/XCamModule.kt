@@ -87,7 +87,7 @@ class XCamModule : XposedModule() {
 
     fun showToast(message: String?) {
         if (message.isNullOrEmpty()) return
-        UIUtils.showToast(mContext, message!!) { msg -> printLog(msg ?: "") }
+        UIUtils.showToast(mContext, message) { msg -> printLog(msg ?: "") }
     }
 
     fun isCapturingState() = captureManager.isCapturing

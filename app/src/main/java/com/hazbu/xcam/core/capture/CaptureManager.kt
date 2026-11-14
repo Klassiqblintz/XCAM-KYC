@@ -119,7 +119,7 @@ class CaptureManager(
                 cached
             } else {
                 performExtraction(
-                    context, path!!, width, height, rotationAngle, isMirrored, captureTimeMs, maxSizeBytes, setIgnoringHooks, liveFrame
+                    context, path, width, height, rotationAngle, isMirrored, captureTimeMs, maxSizeBytes, setIgnoringHooks, liveFrame
                 ).also {
                     cachedCaptureFrame = it
                     if (it != null) log("[+] Capture extraction successful (liveFrame: ${liveFrame != null}, size: ${it.size})")

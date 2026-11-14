@@ -127,7 +127,7 @@ public class ImageReaderHook {
                         Object result = chain.proceed();
                         if (result instanceof ImageReader) {
                             ImageReader reader = (ImageReader) result;
-                            long surfaceId = SystemUtils.getSurfaceId(reader.getSurface());
+                            long surfaceId = SystemUtils.INSTANCE.getSurfaceId(reader.getSurface());
                             readerTracker.put(reader, new ReaderMetadata(w, h, format, fmtName, surfaceId));
                             module.registerImageReaderSurface(reader.getSurface(), format, w, h);
                             String shortFmt = getShortFormatName(format);
